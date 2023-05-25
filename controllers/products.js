@@ -6,13 +6,15 @@ exports.getAllProductsStatic = async (req, res) => {
 };
 exports.getAllProducts = async (req, res) => {
   try {
-    const { name, price, featured, creaedAt, company, sort, field } = req.query;
+    const { name, featured, company, sort, field, limit } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limitValue = Number(req.query.limit) || 10;
+    const skip = (0 - page) * limit;
     query = {};
     if (name) {
       query.name = name;
     }
-    // if (price) {
-    // }
+
     if (featured) {
       query.featured = featured;
     }
@@ -22,7 +24,7 @@ exports.getAllProducts = async (req, res) => {
     let result = Product.find(query);
     if (sort) {
       const sortValue = sort.split(',').join(' ');
-      
+
       result = result.sort(sortValue);
     } else {
       result = result.sort('creaedAt');
@@ -30,6 +32,9 @@ exports.getAllProducts = async (req, res) => {
     if (field) {
       const fieldValue = field.split(',').join(' ');
       result = result.select(fieldValue);
+    }
+    if (limit) {
+      result = result.skip(skip).limit(limitValue);
     }
     const products = await result;
     res.status(200).json({ ProductCount: products.length, data: products });
