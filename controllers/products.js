@@ -6,22 +6,45 @@ exports.getAllProductsStatic = async (req, res) => {
 };
 exports.getAllProducts = async (req, res) => {
   try {
-    const { name, featured, company, sort, field, limit } = req.query;
+    const { name, featured, company, sort, field, limit, numericFilter } = req.query;
     const page = Number(req.query.page) || 1;
     const limitValue = Number(req.query.limit) || 10;
-    const skip = (0 - page) * limit;
+    const skip = (page - 0) * limit;
+    let result;
     query = {};
+
     if (name) {
       query.name = name;
     }
-
+    if (numericFilter) {
+      const operatorMap = {
+        '>': '$gt',
+        '>=': '$gte',
+        '=': '$eq',
+        '<': '$lt',
+        '<=': '$lte',
+      };
+      const regex = /\b(<|<=|=|>|>=)\b/g;
+      let filters = numericFilter.replace(regex, (match) => `-${operatorMap[match]}-`);
+      const options = ['price', 'rating'];
+      let queryObject = {};
+      filters = filters.split(',').forEach((item) => {
+        const [field, operator, value] = item.split('-');
+        if (options.includes(field)) {
+          query[field] = { [operator]: Number(value) };
+        }
+      });
+      console.log(query);
+    }
     if (featured) {
       query.featured = featured;
     }
     if (company) {
       query.company = company;
     }
-    let result = Product.find(query);
+    if (query) {
+    }
+    result = Product.find(query);
     if (sort) {
       const sortValue = sort.split(',').join(' ');
 
